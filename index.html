@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>防災ウェブサイト - トップページ</title>
+    <style>
+        /* 基本スタイル */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Helvetica Neue", Arial, Meiryo, sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: #005a9c;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 5px solid #ffc400;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        /* セクション共通 */
+        .section {
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #005a9c;
+            padding-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        /* リアルタイム警報エリア */
+        #alerts .alert-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffeeba;
+            color: #856404;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border-left: 5px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        /* 避難行動支援（マップへのリンク） */
+        #evacuation-action .action-button {
+            display: block;
+            width: 100%;
+            padding: 25px 20px;
+            background-color: #d93025;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            box-sizing: border-box;
+        }
+        #evacuation-action .action-button:hover {
+            background-color: #b0261d;
+        }
+        
+        /* 備えのメニュー */
+        #preparedness-menu .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .menu-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+        .menu-card:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+        }
+        .menu-card h3 {
+            margin-top: 10px;
+            color: #005a9c;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>防災ウェブサイト</h1>
+    </header>
+
+    <main class="container">
+
+        <section id="alerts" class="section">
+            <h2>現在の防災情報</h2>
+            <div id="weather-alerts">
+                <div class="alert-box alert-warning">（ここに気象庁の警報・注意報が表示されます）</div>
+            </div>
+            <div id="evacuation-info">
+                <div class="alert-box alert-danger">（ここに自治体からの避難情報が表示されます）</div>
+            </div>
+        </section>
+
+        <section id="evacuation-action" class="section">
+            <h2>避難行動を開始する</h2>
+            <a href="map.html" class="action-button">避難経路マップを開く</a>
+        </section>
+
+        <section id="preparedness-menu" class="section">
+            <h2>災害への備え</h2>
+            <div class="menu-grid">
+                <a href="#" class="menu-card">
+                    <h3>備蓄品・防災グッズ</h3>
+                    <p>非常用持ち出し袋や備蓄品のリストを確認します。</p>
+                </a>
+                <a href="#" class="menu-card">
+                    <h3>行動マニュアル</h3>
+                    <p>地震や風水害など、災害別の行動手順を確認します。</p>
+                </a>
+                <a href="map.html" class="menu-card">
+                    <h3>ハザードマップ確認</h3>
+                    <p>地域の危険箇所や避難場所を地図で確認します。</p>
+                </a>
+                <a href="#" class="menu-card">
+                    <h3>地域の情報</h3>
+                    <p>自治体の防災計画や連絡先などを確認します。</p>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 将来的に気象庁などのデータを取得するための準備
+        function loadRealtimeInfo() {
+            console.log("防災情報の読み込み処理を開始します...");
+            // 例: const weatherAlertsDiv = document.getElementById('weather-alerts');
+            // weatherAlertsDiv.innerHTML = '<div class="alert-box alert-danger">大雨警報が発表されました</div>';
+        }
+
+        // ページが読み込まれたら実行
+        window.onload = loadRealtimeInfo;
+    </script>
+
+</body>
+</html>
