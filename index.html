@@ -107,6 +107,26 @@
             margin-top: 10px;
             color: #005a9c;
         }
+        
+        /* ★★★ スマートフォン用のスタイルを追加 ★★★ */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            header h1 {
+                font-size: 1.5em;
+            }
+            .section h2 {
+                font-size: 1.2em;
+            }
+            #evacuation-action .action-button {
+                font-size: 1.2em;
+                padding: 20px;
+            }
+            #preparedness-menu .menu-grid {
+                grid-template-columns: 1fr; /* 1列にする */
+            }
+        }
 
     </style>
 </head>
@@ -158,14 +178,9 @@
     </main>
 
     <script>
-        // 将来的に気象庁などのデータを取得するための準備
         function loadRealtimeInfo() {
             console.log("防災情報の読み込み処理を開始します...");
-            // 例: const weatherAlertsDiv = document.getElementById('weather-alerts');
-            // weatherAlertsDiv.innerHTML = '<div class="alert-box alert-danger">大雨警報が発表されました</div>';
         }
-
-        // ページが読み込まれたら実行
         window.onload = loadRealtimeInfo;
     </script>
 
