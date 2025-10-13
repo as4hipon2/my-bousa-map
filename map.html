@@ -51,13 +51,20 @@
             top: 10px;
             right: 10px;
             z-index: 1000;
+            display: flex;
+            gap: 10px;
         }
-        #clearRoutesBtn {
+        #clearRoutesBtn, #homeBtn {
             padding: 8px 12px;
             background-color: white;
             border: 2px solid #ccc;
             border-radius: 4px;
             cursor: pointer;
+            text-decoration: none;
+            color: #333;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
         }
         .home-icon {
             font-size: 24px;
@@ -65,20 +72,16 @@
             line-height: 24px;
         }
         
-        /* ★★★ スマートフォン用のスタイルを追加 ★★★ */
         @media (max-width: 600px) {
-            /* 検索バーの幅を調整 */
             .leaflet-control-search .photon-input {
                 width: 120px !important;
             }
-            /* 描画ツールが縦に長くなりすぎないように調整 */
             .leaflet-draw-toolbar a {
                 background-size: 20px 20px;
                 width: 26px;
                 height: 26px;
             }
         }
-
         </style>
         <title>避難経路作成マップ</title>
     </head>
@@ -87,6 +90,7 @@
         </div>
         
         <div id="clear-routes-container">
+            <a href="index.html" id="homeBtn" title="トップページに戻る">トップに戻る</a>
             <button id="clearRoutesBtn" title="保存されたすべての経路を削除します">経路をクリア</button>
         </div>
 
@@ -107,7 +111,571 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
         <script>
-        // ... (これ以降の <script> タグの中身は変更ありません) ...
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        })
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+              var td = rows[i].querySelector('td.visible-with-data');
+              var key = td ? td.id : '';
+              if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                  rows[i].parentNode.removeChild(rows[i]);
+              }
+         }
+         return tempDiv.innerHTML;
+        }
+        
+        function addClassToPopupIfMedia(content, popup) {
+             var tempDiv = document.createElement('div');
+             tempDiv.innerHTML = content;
+             if (tempDiv.querySelector('td img')) {
+                 popup._contentNode.classList.add('media');
+                  setTimeout(function() {
+                      popup.update();
+                  }, 10);
+             } else {
+                 popup._contentNode.classList.remove('media');
+             }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        
+        L.control.locate({
+            locateOptions: {
+                maxZoom: 19
+            },
+            drawCircle: false
+        }).addTo(map);
+
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+        }
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OpenStreetMap_0;
+        map.addLayer(layer_OpenStreetMap_0);
+        
+        function pop__1(feature, layer) {
+            var popupContent = '<table>\
+                                    <tr>\
+                                        <td style="font-weight: bold; padding-bottom: 5px;">' + (feature.properties['P20_002'] !== null ? autolinker.link(String(feature.properties['P20_002']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                                    </tr>\
+                                    <tr>\
+                                        <td>' + (feature.properties['P20_003'] !== null ? autolinker.link(String(feature.properties['P20_003']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                                    </tr>\
+                                    <tr>\
+                                        <td style="padding-top: 5px;">' + (feature.properties['P20_004'] !== null ? autolinker.link(String(feature.properties['P20_004']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                                    </tr>\
+                                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+            layer.on('popupopen', function(e) {
+                addClassToPopupIfMedia(content, e.popup);
+            });
+            layer.bindPopup(content, { maxHeight: 400 });
+        }
+        
+        function pop__2(feature, layer) {
+            var popupContent = '<table>\
+                                    <tr>\
+                                        <td style="font-weight: bold; padding-bottom: 5px;">' + (feature.properties['P20_002'] !== null ? autolinker.link(String(feature.properties['P20_002']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                                    </tr>\
+                                    <tr>\
+                                        <td>' + (feature.properties['P20_003'] !== null ? autolinker.link(String(feature.properties['P20_003']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                                    </tr>\
+                                    <tr>\
+                                        <td style="padding-top: 5px;">' + (feature.properties['P20_004'] !== null ? autolinker.link(String(feature.properties['P20_004']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                                    </tr>\
+                                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+            layer.on('popupopen', function(e) {
+                addClassToPopupIfMedia(content, e.popup);
+            });
+            layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style__1_0() {
+            return {
+                pane: 'pane__1',
+                radius: 10,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(243,166,178,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane__1');
+        map.getPane('pane__1').style.zIndex = 401;
+        map.getPane('pane__1').style['mix-blend-mode'] = 'normal';
+        var layer__1 = new L.geoJson(json__1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json__1',
+            layerName: 'layer__1',
+            pane: 'pane__1',
+            onEachFeature: pop__1,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style__1_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer__1);
+        map.addLayer(layer__1);
+        
+        function style__2_0() {
+            return {
+                pane: 'pane__2',
+                radius: 10,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(229,182,54,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane__2');
+        map.getPane('pane__2').style.zIndex = 402;
+        map.getPane('pane__2').style['mix-blend-mode'] = 'normal';
+        var layer__2 = new L.geoJson(json__2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json__2',
+            layerName: 'layer__2',
+            pane: 'pane__2',
+            onEachFeature: pop__2,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style__2_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer__2);
+        map.addLayer(layer__2);
+        
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            },
+            draw: {
+                polygon: false,
+                rectangle: {
+                    shapeOptions: {
+                        color: 'red',
+                        weight: 2,
+                        fillOpacity: 0.3
+                    }
+                },
+                circle: false,
+                circlemarker: false,
+                marker: {
+                    icon: L.divIcon({
+                        className: 'home-icon',
+                        html: '🏠',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    })
+                },
+                polyline: {
+                    shapeOptions: {
+                        color: '#f357a1',
+                        weight: 4
+                    }
+                }
+            }
+        });
+        map.addControl(drawControl);
+        
+        L.drawLocal.draw.toolbar.actions.title = '描画をキャンセル';
+        L.drawLocal.draw.toolbar.actions.text = 'キャンセル';
+        L.drawLocal.draw.toolbar.finish.title = '描画を終了';
+        L.drawLocal.draw.toolbar.finish.text = '終了';
+        L.drawLocal.draw.toolbar.undo.title = '最後の点を削除';
+        L.drawLocal.draw.toolbar.undo.text = '最後の点を削除';
+        L.drawLocal.draw.toolbar.buttons.polyline = '自由な経路を描画';
+        L.drawLocal.draw.toolbar.buttons.rectangle = '通行止めエリアを描画';
+        L.drawLocal.draw.toolbar.buttons.marker = '自宅を登録';
+        
+        L.drawLocal.edit.toolbar.actions.save.title = '変更を保存';
+        L.drawLocal.edit.toolbar.actions.save.text = '保存';
+        L.drawLocal.edit.toolbar.actions.cancel.title = '編集をキャンセル';
+        L.drawLocal.edit.toolbar.actions.cancel.text = 'キャンセル';
+        L.drawLocal.edit.toolbar.actions.clearAll.title = 'すべての描画を削除';
+        L.drawLocal.edit.toolbar.actions.clearAll.text = 'すべて削除';
+        L.drawLocal.edit.toolbar.buttons.edit = '描画を編集';
+        L.drawLocal.edit.toolbar.buttons.editDisabled = '編集する描画がありません';
+        L.drawLocal.edit.toolbar.buttons.remove = '描画を削除';
+        L.drawLocal.edit.toolbar.buttons.removeDisabled = '削除する描画がありません';
+
+        map.on(L.Draw.Event.CREATED, function (event) {
+            var layer = event.layer;
+            if (layer instanceof L.Marker) {
+                drawnItems.eachLayer(l => {
+                    if (l.isHomeMarker) {
+                        drawnItems.removeLayer(l);
+                    }
+                });
+                layer.isHomeMarker = true;
+                layer.bindPopup("自宅");
+            }
+            drawnItems.addLayer(layer);
+            saveRoutes();
+        });
+
+        map.on(L.Draw.Event.EDITED, saveRoutes);
+        map.on(L.Draw.Event.DELETED, saveRoutes);
+        
+        const url = {"Nominatim": "https://nominatim.openstreetmap.org/search?format=geojson&addressdetails=1&",
+        "BAN": "https://api-adresse.data.gouv.fr/search/?"}
+        
+        var photonControl = L.control.photon({
+            url: url["Nominatim"],
+            feedbackLabel: '',
+            position: 'topleft',
+            includePosition: true,
+            initial: true,
+        }).addTo(map);
+
+        var search_marker = null;
+        photonControl.on('selected', function(e) {
+            if (search_marker) {
+                map.removeLayer(search_marker);
+            }
+            var latlng = L.latLng(e.choice.geometry.coordinates[1], e.choice.geometry.coordinates[0]);
+            var label = e.choice.properties.name || '検索結果';
+            search_marker = L.marker(latlng).bindPopup(label).addTo(map);
+            map.setView(latlng, 17);
+        });
+        
+        var search = document.getElementsByClassName("leaflet-photon leaflet-control")[0];
+        search.classList.add("leaflet-control-search")
+        search.style.display = "flex";
+        search.style.backgroundColor="rgba(255,255,255,0.5)" 
+
+        var button = document.createElement("div");
+        button.id = "gcd-button-control";
+        button.className = "gcd-gl-btn fa fa-search search-button";
+
+        search.insertBefore(button, search.firstChild);
+        last = search.lastChild;
+        last.style.display = "none";
+        button.addEventListener("click", function (e) {
+            if (last.style.display === "none") {
+                last.style.display = "block";
+            } else {
+                last.style.display = "none";
+            }
+        });
+        setBounds();
+
+        const apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImEyMDIyMGRjNzZjYjRjYzg4Y2ExYzQ3NzVmYjZhODFmIiwiaCI6Im11cm11cjY0In0=';
+        let shortestRouteLayer = null;
+        let randomRouteLayer = null;
+        let activeRoutesGroup = L.featureGroup().addTo(map);
+
+        map.createPane('routes-shortest');
+        map.createPane('routes-random');
+        
+        map.on('popupopen', function(e) {
+            const lat = e.popup._source.feature.geometry.coordinates[1];
+            const lng = e.popup._source.feature.geometry.coordinates[0];
+            const content = e.popup.getContent();
+            
+            if (!content.includes('route-button')) {
+                const buttonContainer = `
+                    <div class="route-group">
+                        <b>自宅から:</b><br>
+                        <button class="route-button" onclick="createShortestRouteFromHome(${lat}, ${lng})">最短経路</button>
+                        <button class="route-button" onclick="createRandomRouteFromHome(${lat}, ${lng})">ランダム経路</button>
+                    </div>
+                    <div class="route-group">
+                        <b>現在地から:</b><br>
+                        <button class="route-button" onclick="createShortestRouteFromCurrentLocation(${lat}, ${lng})">最短経路</button>
+                        <button class="route-button" onclick="createRandomRouteFromCurrentLocation(${lat}, ${lng})">ランダム経路</button>
+                    </div>`;
+                e.popup.setContent(content + buttonContainer);
+            }
+        });
+
+        function createShortestRouteFromHome(destLat, destLng) {
+            getStartPointAndFetchRoute('home', destLat, destLng, false);
+        }
+        function createRandomRouteFromHome(destLat, destLng) {
+            getStartPointAndFetchRoute('home', destLat, destLng, true);
+        }
+        function createShortestRouteFromCurrentLocation(destLat, destLng) {
+            getStartPointAndFetchRoute('current', destLat, destLng, false);
+        }
+        function createRandomRouteFromCurrentLocation(destLat, destLng) {
+            getStartPointAndFetchRoute('current', destLat, destLng, true);
+        }
+
+        async function getStartPointAndFetchRoute(startType, destLat, destLng, useRandomWaypoint) {
+            if (startType === 'home') {
+                let startPoint = null;
+                drawnItems.eachLayer(layer => {
+                    if (layer.isHomeMarker) {
+                        startPoint = layer.getLatLng();
+                    }
+                });
+
+                if (startPoint) {
+                    processRoute(startPoint.lat, startPoint.lng, destLat, destLng, useRandomWaypoint);
+                } else {
+                    alert("自宅が登録されていません。左の描画ツールから自宅を登録してください。");
+                }
+            } else if (startType === 'current') {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        processRoute(position.coords.latitude, position.coords.longitude, destLat, destLng, useRandomWaypoint);
+                    },
+                    () => {
+                        alert('現在地を取得できませんでした。ブラウザの位置情報サービスを許可してください。');
+                    }
+                );
+            }
+        }
+        
+        async function processRoute(startLat, startLng, destLat, destLng, useRandomWaypoint) {
+            let waypoint = null;
+            let avoidPolygons = null;
+
+            if (useRandomWaypoint) {
+                const distanceFactor = Math.sqrt(Math.pow(destLat - startLat, 2) + Math.pow(destLng - startLng, 2));
+                const randomFactor = 0.4;
+
+                const midLat = (startLat + destLat) / 2;
+                const midLng = (startLng + destLng) / 2;
+
+                const offsetLat = (Math.random() - 0.5) * distanceFactor * randomFactor;
+                const offsetLng = (Math.random() - 0.5) * distanceFactor * randomFactor;
+
+                waypoint = { lat: midLat + offsetLat, lng: midLng + offsetLng };
+                
+                avoidPolygons = { type: 'MultiPolygon', coordinates: [] };
+                drawnItems.eachLayer(layer => {
+                    if (layer instanceof L.Rectangle) {
+                        const latlngs = layer.getLatLngs();
+                        const polyCoords = latlngs[0].map(p => [p.lng, p.lat]);
+                        polyCoords.push(polyCoords[0]);
+                        avoidPolygons.coordinates.push([polyCoords]);
+                    }
+                });
+                if (avoidPolygons.coordinates.length === 0) {
+                    avoidPolygons = null;
+                }
+            }
+            
+            const routeData = await fetchRoute(startLat, startLng, destLat, destLng, waypoint, avoidPolygons);
+            
+            if(routeData){
+                drawRoute(routeData.coords, routeData.distance, useRandomWaypoint);
+            }
+        }
+
+        async function fetchRoute(startLat, startLng, destLat, destLng, waypoint = null, avoidPolygons = null) {
+            const requestUrl = 'https://api.openrouteservice.org/v2/directions/foot-walking/geojson';
+            
+            let coordinates = [ [startLng, startLat] ];
+            if (waypoint) {
+                coordinates.push([waypoint.lng, waypoint.lat]);
+            }
+            coordinates.push([destLng, destLat]);
+            
+            let requestBody = { coordinates: coordinates };
+            
+            if (avoidPolygons) {
+                requestBody.options = { avoid_polygons: avoidPolygons };
+            }
+
+            try {
+                const response = await fetch(requestUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+                        'Content-Type': 'application/json',
+                        'Authorization': apiKey
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                
+                if (data.features && data.features.length > 0) {
+                    const routeCoords = data.features[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                    const distance = data.features[0].properties.summary.distance; 
+                    return { coords: routeCoords, distance: distance };
+                } else {
+                    console.error('APIからの応答エラー:', data);
+                    alert('経路が見つかりませんでした。通行止めエリアが経路を塞いでいる可能性があります。');
+                    return null;
+                }
+            } catch (error) {
+                alert('経路の取得中にエラーが発生しました。詳細は開発者コンソールを確認してください。');
+                console.error("経路探索でネットワークエラーまたはその他の問題が発生しました:", error);
+                return null;
+            }
+        }
+
+        function drawRoute(coords, distance, isRandomRoute) {
+            let color;
+            let paneName;
+            
+            if (isRandomRoute) {
+                color = 'purple';
+                paneName = 'routes-random';
+                if (randomRouteLayer) {
+                    activeRoutesGroup.removeLayer(randomRouteLayer);
+                }
+            } else {
+                color = 'blue';
+                paneName = 'routes-shortest';
+                if (shortestRouteLayer) {
+                    activeRoutesGroup.removeLayer(shortestRouteLayer);
+                }
+            }
+            
+            const newRoute = L.polyline(coords, { 
+                color: color, 
+                weight: 5, 
+                opacity: 0.7,
+                pane: paneName
+            });
+            
+            newRoute.routeData = {
+                type: isRandomRoute ? 'random' : 'shortest',
+                distance: distance
+            };
+
+            let distanceText;
+            if (distance > 1000) {
+                distanceText = `距離: ${(distance / 1000).toFixed(2)} km`;
+            } else {
+                distanceText = `距離: ${Math.round(distance)} m`;
+            }
+
+            newRoute.bindPopup(distanceText);
+            
+            newRoute.addTo(activeRoutesGroup);
+
+            if (isRandomRoute) {
+                randomRouteLayer = newRoute;
+            } else {
+                shortestRouteLayer = newRoute;
+            }
+
+            if (activeRoutesGroup.getLayers().length > 0) {
+                map.fitBounds(activeRoutesGroup.getBounds(), { padding: [50, 50] });
+            }
+            
+            saveRoutes();
+        }
+        
+        function saveRoutes() {
+            const dataToSave = [];
+            
+            if (shortestRouteLayer) {
+                dataToSave.push({
+                    type: 'shortest',
+                    coords: shortestRouteLayer.getLatLngs(),
+                    distance: shortestRouteLayer.routeData.distance
+                });
+            }
+            if (randomRouteLayer) {
+                dataToSave.push({
+                    type: 'random',
+                    coords: randomRouteLayer.getLatLngs(),
+                    distance: randomRouteLayer.routeData.distance
+                });
+            }
+            
+            drawnItems.eachLayer(layer => {
+                if (layer.isHomeMarker) {
+                    dataToSave.push({ type: 'home_marker', coords: layer.getLatLng() });
+                } else if (layer instanceof L.Polyline) {
+                    dataToSave.push({ type: 'drawn_line', coords: layer.getLatLngs() });
+                } else if (layer instanceof L.Rectangle) {
+                    dataToSave.push({ type: 'drawn_area', coords: layer.getLatLngs() });
+                }
+            });
+
+            localStorage.setItem('savedEvacuationRoutes', JSON.stringify(dataToSave));
+            console.log('アイテムが保存されました。', dataToSave);
+        }
+
+        function loadSavedRoutes() {
+            const savedData = localStorage.getItem('savedEvacuationRoutes');
+            if (savedData) {
+                const items = JSON.parse(savedData);
+                console.log('保存されたアイテムを読み込みます。', items);
+
+                items.forEach(item => {
+                    if (item.type === 'shortest' || item.type === 'random') {
+                        drawRoute(item.coords, item.distance, item.type === 'random');
+                    } else if (item.type === 'drawn_line') {
+                        const drawnLine = L.polyline(item.coords, { color: '#f357a1', weight: 4 });
+                        drawnItems.addLayer(drawnLine);
+                    } else if (item.type === 'drawn_area') {
+                        const drawnArea = L.rectangle(item.coords, { color: 'red', weight: 2, fillOpacity: 0.3 });
+                        drawnItems.addLayer(drawnArea);
+                    } else if (item.type === 'home_marker') {
+                        const homeIcon = L.divIcon({ className: 'home-icon', html: '🏠', iconSize: [24, 24], iconAnchor: [12, 24] });
+                        const homeMarker = L.marker(item.coords, { icon: homeIcon });
+                        homeMarker.isHomeMarker = true;
+                        homeMarker.bindPopup("自宅");
+                        drawnItems.addLayer(homeMarker);
+                    }
+                });
+            }
+        }
+
+        document.getElementById('clearRoutesBtn').addEventListener('click', function() {
+            if (confirm('保存されたすべての経路とエリアを削除します。よろしいですか？')) {
+                localStorage.removeItem('savedEvacuationRoutes');
+                location.reload();
+            }
+        });
+
+        loadSavedRoutes();
+
         </script>
     </body>
 </html>
