@@ -14,6 +14,9 @@
         <link rel="stylesheet" href="css/leaflet.photon.css">
         
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+        
+        <link rel="stylesheet" href="css/MarkerCluster.css" />
+        <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
 
         <style>
         html, body, #map {
@@ -109,6 +112,8 @@
         <script src="data/_2.js"></script>
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+        
+        <script src="js/leaflet.markercluster.js"></script>
 
         <script>
         var map = L.map('map', {
@@ -159,6 +164,8 @@
         function setBounds() {
             if (bounds_group.getLayers().length) {
                 map.fitBounds(bounds_group.getBounds());
+            } else if (map.getZoom() < 10) {
+                map.setView([34.9, 135.8], 10);
             }
         }
         map.createPane('pane_OpenStreetMap_0');
@@ -229,26 +236,6 @@
                 interactive: true,
             }
         }
-        map.createPane('pane__1');
-        map.getPane('pane__1').style.zIndex = 401;
-        map.getPane('pane__1').style['mix-blend-mode'] = 'normal';
-        var layer__1 = new L.geoJson(json__1, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json__1',
-            layerName: 'layer__1',
-            pane: 'pane__1',
-            onEachFeature: pop__1,
-            pointToLayer: function (feature, latlng) {
-                var context = {
-                    feature: feature,
-                    variables: {}
-                };
-                return L.circleMarker(latlng, style__1_0(feature));
-            },
-        });
-        bounds_group.addLayer(layer__1);
-        map.addLayer(layer__1);
         
         function style__2_0() {
             return {
@@ -266,9 +253,27 @@
                 interactive: true,
             }
         }
+        
+        // ★ クラスタリングの設定
+        var markerClusters = L.markerClusterGroup();
+
+        map.createPane('pane__1');
+        map.getPane('pane__1').style.zIndex = 401;
+        var layer__1 = new L.geoJson(json__1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json__1',
+            layerName: 'layer__1',
+            pane: 'pane__1',
+            onEachFeature: pop__1,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, style__1_0(feature));
+            },
+        });
+        markerClusters.addLayer(layer__1);
+
         map.createPane('pane__2');
         map.getPane('pane__2').style.zIndex = 402;
-        map.getPane('pane__2').style['mix-blend-mode'] = 'normal';
         var layer__2 = new L.geoJson(json__2, {
             attribution: '',
             interactive: true,
@@ -277,16 +282,16 @@
             pane: 'pane__2',
             onEachFeature: pop__2,
             pointToLayer: function (feature, latlng) {
-                var context = {
-                    feature: feature,
-                    variables: {}
-                };
                 return L.circleMarker(latlng, style__2_0(feature));
             },
         });
-        bounds_group.addLayer(layer__2);
-        map.addLayer(layer__2);
+        markerClusters.addLayer(layer__2);
         
+        bounds_group.addLayer(layer__1);
+        bounds_group.addLayer(layer__2);
+        
+        map.addLayer(markerClusters);
+
         var drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
 
@@ -415,6 +420,7 @@
         map.createPane('routes-random');
         
         map.on('popupopen', function(e) {
+            if (!e.popup._source.feature) return; // クラスタのポップアップは無視
             const lat = e.popup._source.feature.geometry.coordinates[1];
             const lng = e.popup._source.feature.geometry.coordinates[0];
             const content = e.popup.getContent();
