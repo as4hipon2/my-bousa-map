@@ -19,11 +19,17 @@
         <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
 
         <style>
-        html, body, #map {
+        /* 修正点 1: 100% を 100vh に変更 */
+        html, body {
             width: 100%;
             height: 100%;
             padding: 0;
             margin: 0;
+            overflow: hidden; /* ページ全体のスクロールを禁止 */
+        }
+        #map {
+            width: 100%;
+            height: 100vh; /* 100% から 100vh に変更 */
         }
         .route-button {
             margin-top: 5px;
@@ -161,13 +167,20 @@
         }).addTo(map);
 
         var bounds_group = new L.featureGroup([]);
+        
+        /* 修正点 2: setBounds() のロジックを修正 */
         function setBounds() {
-            if (bounds_group.getLayers().length) {
-                map.fitBounds(bounds_group.getBounds());
-            } else if (map.getZoom() < 10) {
+            var bounds = bounds_group.getBounds();
+            if (bounds.isValid()) {
+                // 有効なデータ領域がある場合、そこにフィットさせる
+                map.fitBounds(bounds);
+            } else {
+                // 有効な領域がない場合（データが空など）は、
+                // デフォルトの表示位置を設定する
                 map.setView([34.9, 135.8], 10);
             }
         }
+        
         map.createPane('pane_OpenStreetMap_0');
         map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
         var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {

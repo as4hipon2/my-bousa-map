@@ -53,15 +53,20 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
-        .alert-warning {
+        .alert-warning { /* 注意報 */
             background-color: #fff3cd;
             border-left: 5px solid #ffeeba;
             color: #856404;
         }
-        .alert-danger {
+        .alert-danger { /* 警報 */
             background-color: #f8d7da;
             border-left: 5px solid #f5c6cb;
             color: #721c24;
+        }
+        .alert-success { /* 発表なし */
+            background-color: #d4edda;
+            border-left: 5px solid #c3e6cb;
+            color: #155724;
         }
 
         /* 避難行動支援（マップへのリンク） */
@@ -141,7 +146,7 @@
         <section id="alerts" class="section">
             <h2>現在の防災情報</h2>
             <div id="weather-alerts">
-                <div class="alert-box alert-warning">（ここに気象庁の警報・注意報が表示されます）</div>
+                <div class="alert-box alert-warning">気象情報を読み込み中です...</div>
             </div>
             <div id="evacuation-info">
                 <div class="alert-box alert-danger">（ここに自治体からの避難情報が表示されます）</div>
@@ -180,7 +185,77 @@
     <script>
         function loadRealtimeInfo() {
             console.log("防災情報の読み込み処理を開始します...");
+            
+            const alertsDiv = document.getElementById('weather-alerts');
+            
+            // 地域のコード。沖縄県(470000)を指定。
+            const areaCode = '470000'; // 沖縄県
+            const apiUrl = `https://www.jma.go.jp/bosai/warning/data/warning/${areaCode}.json`;
+
+            // fetch API を使って気象庁のデータを非同期で取得
+            fetch(apiUrl)
+                .then(response => {
+                    // ネットワークエラーのチェック
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    // レスポンスをJSONとして解析
+                    return response.json();
+                })
+                .then(data => {
+                    // 警報・注意報のリストを取得
+                    const warnings = data.warnings;
+                    
+                    let html = '';
+                    let hasAlerts = false; // 発表中の警報・注意報があるか
+
+                    if (warnings && warnings.length > 0) {
+                        // 発表されている警報・注意報をループ処理
+                        warnings.forEach(warning => {
+                            // "発表"中のものだけをリストアップ
+                            if (warning.status === '発表') {
+                                hasAlerts = true;
+                                // '警報'という文字が含まれていれば 'alert-danger' (赤)、
+                                // 含まれていなければ 'alert-warning' (黄) を適用
+                                const isWarning = warning.type.includes('警報');
+                                const alertClass = isWarning ? 'alert-danger' : 'alert-warning';
+                                
+                                html += `<div class="alert-box ${alertClass}">${warning.type}</div>`;
+                            }
+                        });
+                    }
+
+                    // 発表時刻とヘッドライン（概要）
+                    const reportTime = new Date(data.reportDatetime).toLocaleString('ja-JP');
+                    const headline = data.headlineText || '（ヘッドライン情報なし）';
+                    
+                    let headerInfo = `
+                        <p style="font-size: 0.9em; text-align: right; margin: 0 0 10px 0;">${reportTime} 発表</p>
+                    `;
+
+                    if (hasAlerts) {
+                        // 発表中の警報/注意報がある場合
+                        alertsDiv.innerHTML = headerInfo + `<p style="font-weight: bold; margin-top: 0;">${headline}</p>` + html;
+                    } else {
+                        // 発表中の警報/注意報がない場合
+                        alertsDiv.innerHTML = headerInfo + '<div class="alert-box alert-success">現在、発表されている警報・注意報はありません。</div>';
+                    }
+                })
+                .catch(error => {
+                    // エラーハンドリング
+                    console.error('気象情報の取得に失敗しました:', error);
+                    let errorMessage = '気象情報の取得に失敗しました。';
+                    
+                    // CORSエラーの場合、ユーザーにわかりやすいメッセージを出す
+                    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                         errorMessage += '（CORSポリシー違反の可能性があります。ローカルサーバでお試しください）';
+                    }
+                    
+                    alertsDiv.innerHTML = `<div class="alert-box alert-danger">${errorMessage}</div>`;
+                });
         }
+        
+        // ページが読み込まれたら loadRealtimeInfo 関数を実行
         window.onload = loadRealtimeInfo;
     </script>
 
