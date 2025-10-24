@@ -113,8 +113,32 @@
             color: #005a9c;
         }
         
+        /* ---------------------------------
+         * 追加: スマホ用 固定フッターボタン
+         * --------------------------------- */
+        #fab-map-button {
+            display: none; /* デスクトップでは非表示 */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #d93025; /* 既存のボタンと色を合わせる */
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+            box-sizing: border-box; /* paddingを含めて幅100%にする */
+        }
+
         /* スマートフォン用のスタイル */
         @media (max-width: 600px) {
+            body {
+                /* 追加: 固定フッターボタンがコンテンツに
+                   重ならないように余白を追加 (ボタンの高さ分) */
+                padding-bottom: 80px; 
+            }
             .container {
                 padding: 10px;
             }
@@ -124,12 +148,22 @@
             .section h2 {
                 font-size: 1.2em;
             }
-            #evacuation-action .action-button {
-                font-size: 1.2em;
-                padding: 20px;
+
+            /* 変更: 既存のアクションボタンセクションは非表示にする */
+            #evacuation-action {
+                display: none;
             }
+            
             #preparedness-menu .menu-grid {
                 grid-template-columns: 1fr;
+            }
+
+            /* 追加: スマホ用固定フッターボタンを表示し、
+               スタイルを調整 */
+            #fab-map-button {
+                display: block;
+                font-size: 1.2em;
+                padding: 20px;
             }
         }
 
@@ -182,14 +216,18 @@
 
     </main>
 
+    <a href="map.html" id="fab-map-button">避難経路マップを開く</a>
+
     <script>
         function loadRealtimeInfo() {
             console.log("防災情報の読み込み処理を開始します...");
             
             const alertsDiv = document.getElementById('weather-alerts');
             
-            // 地域のコード。沖縄県(470000)を指定。
-            const areaCode = '470000'; // 沖縄県
+            // 地域のコード。ここでは例として京都府(260000)を指定。
+            // 東京都は '130000', 大阪府は '270000'
+            // 他の地域コードは https://www.jma.go.jp/bosai/common/const/area.json で確認できます。
+            const areaCode = '260000'; // 京都府
             const apiUrl = `https://www.jma.go.jp/bosai/warning/data/warning/${areaCode}.json`;
 
             // fetch API を使って気象庁のデータを非同期で取得
