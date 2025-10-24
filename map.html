@@ -114,6 +114,7 @@
         <script src="js/labelgun.min.js"></script>
         <script src="js/labels.js"></script>
         <script src="js/leaflet.photon.js"></script>
+        
         <script src="data/_1.js"></script>
         <script src="data/_2.js"></script>
         
@@ -134,26 +135,26 @@
          tempDiv.innerHTML = content;
          var rows = tempDiv.querySelectorAll('tr');
          for (var i = 0; i < rows.length; i++) {
-              var td = rows[i].querySelector('td.visible-with-data');
-              var key = td ? td.id : '';
-              if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
-                  rows[i].parentNode.removeChild(rows[i]);
-              }
+               var td = rows[i].querySelector('td.visible-with-data');
+               var key = td ? td.id : '';
+               if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                   rows[i].parentNode.removeChild(rows[i]);
+               }
          }
          return tempDiv.innerHTML;
         }
         
         function addClassToPopupIfMedia(content, popup) {
-             var tempDiv = document.createElement('div');
-             tempDiv.innerHTML = content;
-             if (tempDiv.querySelector('td img')) {
-                 popup._contentNode.classList.add('media');
-                  setTimeout(function() {
-                      popup.update();
-                  }, 10);
-             } else {
-                 popup._contentNode.classList.remove('media');
-             }
+              var tempDiv = document.createElement('div');
+              tempDiv.innerHTML = content;
+              if (tempDiv.querySelector('td img')) {
+                  popup._contentNode.classList.add('media');
+                   setTimeout(function() {
+                       popup.update();
+                   }, 10);
+              } else {
+                  popup._contentNode.classList.remove('media');
+              }
         }
         var zoomControl = L.control.zoom({
             position: 'topleft'
